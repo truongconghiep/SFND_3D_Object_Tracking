@@ -152,6 +152,17 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 }
 
 
+void printMap(map<int, int> &MapData)
+{
+    map<int, int>::iterator itr; 
+    for (itr = MapData.begin(); itr != MapData.end(); ++itr) 
+    { 
+        cout << '\t' << itr->first 
+             << '\t' << itr->second << '\n'; 
+    } 
+    cout << endl;
+}
+
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
     int bins[currFrame.boundingBoxes.size()][prevFrame.boundingBoxes.size()];
@@ -184,4 +195,6 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
         bbBestMatches.insert(pair<int, int>(CurrBoundingBoxId, PrevBoundingBoxId));
     }
+
+    printMap(bbBestMatches);
 }
