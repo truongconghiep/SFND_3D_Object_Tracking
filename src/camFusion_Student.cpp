@@ -178,10 +178,10 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
             if (MatcheNum > Max)
             {
                 Max = MatcheNum;
-                CurrBoundingBoxId = currFrame.boundingBoxes.Id;
-                PrevBoundingBoxId = prevFrame.boundingBoxes.Id;
+                CurrBoundingBoxId = itCurr->boxID;
+                PrevBoundingBoxId = itPrev->boxID;
             }
         }
-        bbBestMatches.insert(CurrBoundingBoxId, PrevBoundingBoxId);
+        bbBestMatches.insert(pair<int, int>(CurrBoundingBoxId, PrevBoundingBoxId));
     }
 }
