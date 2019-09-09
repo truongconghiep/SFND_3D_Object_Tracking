@@ -248,7 +248,6 @@ void printMap(map<int, int> &MapData)
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    memset(bins, 0, sizeof(bins));
     for (auto itCurr = currFrame.boundingBoxes.begin(); itCurr!=currFrame.boundingBoxes.end();itCurr++)
     {
         int Max = 0;
@@ -276,6 +275,4 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
         bbBestMatches.insert(pair<int, int>(CurrBoundingBoxId, PrevBoundingBoxId));
     }
-
-    printMap(bbBestMatches);
 }
