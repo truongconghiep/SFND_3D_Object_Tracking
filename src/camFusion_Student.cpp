@@ -273,6 +273,6 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
                 PrevBoundingBoxId = itPrev->boxID;
             }
         }
-        bbBestMatches.insert(pair<int, int>(CurrBoundingBoxId, PrevBoundingBoxId));
+        bbBestMatches.insert({PrevBoundingBoxId, CurrBoundingBoxId});
     }
 }
