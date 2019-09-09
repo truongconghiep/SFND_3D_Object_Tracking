@@ -148,7 +148,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-        // compute distance ratios between all matched keypoints
+    // compute distance ratios between all matched keypoints
     vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
     for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
     { // outer kpt. loop
@@ -192,7 +192,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     long medIndex = floor(distRatios.size() / 2.0);
     double medDistRatio = distRatios.size() % 2 == 0 ? (distRatios[medIndex - 1] + distRatios[medIndex]) / 2.0 : distRatios[medIndex]; // compute median dist. ratio to remove outlier influence
 
-    dT = 1 / frameRate;
+    double dT = 1 / frameRate;
     TTC = -dT / (1 - medDistRatio);
 }
 
@@ -203,18 +203,35 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     // auxiliary variables
     double dT = 1 / frameRate; // time between two measurements in seconds
 
-    // find closest distance to Lidar points 
-    double minXPrev = 1e9, minXCurr = 1e9;
+    // find mean distance in previous frame
+    double meanXPrev = 0, meanXCurr = 0, minXCurr = 1e9;
     for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) {
-        minXPrev = minXPrev>it->x ? it->x : minXPrev;
+        meanXPrev += it->x;
+    }
+    int NumOfLidarPointsPrev = lidarPointsPrev.size();
+    if(NumOfLidarPointsPrev)
+    {
+        meanXPrev = meanXPrev / NumOfLidarPointsPrev;
+    }
+  
+    // find mean distance in current frame
+    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) {
+        meanXCurr += it->x;
+    }
+    int NumOfLidarPointsCurr = lidarPointsCurr.size();
+    if(NumOfLidarPointsCurr)
+    {
+        meanXCurr = meanXCurr / NumOfLidarPointsCurr;
     }
 
-    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) {
-        minXCurr = minXCurr>it->x ? it->x : minXCurr;
+    // looking for nearest point in front of vehicle with filtering
+    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) 
+    {
+        minXCurr = ((minXCurr>it->x) && (it->x > 0.8 * meanXCurr)) ? it->x : minXCurr;
     }
 
     // compute TTC from both measurements
-    TTC = minXCurr * dT / (minXPrev-minXCurr);
+    TTC = minXCurr * dT / (meanXPrev-meanXCurr);
 }
 
 
