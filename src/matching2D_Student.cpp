@@ -14,11 +14,15 @@ using cv::AKAZE;
 
 
 // Find best matches for keypoints in two camera images based on several matching methods
-int matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::KeyPoint> &kPtsRef, 
-                      cv::Mat &descSource, cv::Mat &descRef,
-                      std::vector<cv::DMatch> &matches, std::string descriptorType, 
-                      std::string matcherType, std::string selectorType,
-                      string descriptorName)
+void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, 
+                        std::vector<cv::KeyPoint> &kPtsRef, 
+                        cv::Mat &descSource, 
+                        cv::Mat &descRef,
+                        std::vector<cv::DMatch> &matches, 
+                        std::string descriptorType, 
+                        std::string matcherType, 
+                        std::string selectorType,
+                        std::string descriptorName)
 {
     // configure matcher
     bool crossCheck = false;
@@ -52,7 +56,6 @@ int matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::KeyP
     { // nearest neighbor (best match)
 
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
-        return matches.size();
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
@@ -74,13 +77,11 @@ int matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::KeyP
             }
         }
         cout << "# keypoints removed = " << knn_matches.size() - matches.size() << endl;
-        return matches.size();
     }
-    return 0;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
-double descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType)
+void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType)
 {
     // select appropriate descriptor
     cv::Ptr<cv::DescriptorExtractor> extractor;
@@ -120,7 +121,6 @@ double descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &des
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     double t_ms = 1000 * t / 1.0;
     cout << descriptorType << " descriptor extraction in " << t_ms << " ms" << endl;
-    return t_ms;
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
@@ -217,7 +217,7 @@ void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img)
     }     // eof loop over rows
 }
 
-double detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType)
+void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType)
 {
     double t = (double)cv::getTickCount();
     if(detectorType.compare("SHITOMASI") == 0)
@@ -256,5 +256,4 @@ double detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, st
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     double t_ms = 1000 * t / 1.0;
     cout << "detection with n=" << keypoints.size() << " keypoints in " << t_ms << " ms" << endl;
-    return t_ms;
 }
