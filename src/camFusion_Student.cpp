@@ -275,4 +275,5 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
         bbBestMatches.insert({PrevBoundingBoxId, CurrBoundingBoxId});
     }
+    printMap(bbBestMatches);
 }
