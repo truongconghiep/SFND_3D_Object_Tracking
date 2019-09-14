@@ -22,7 +22,7 @@
 
 using namespace std;
 
-#define ENABLE_LOG 1
+#define ENABLE_LOG 0
 
 void ObjectTracking3D(string descriptorName, 
                         string detectorType
