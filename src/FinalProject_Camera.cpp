@@ -22,8 +22,14 @@
 
 using namespace std;
 
-/* MAIN PROGRAM */
-int main(int argc, const char *argv[])
+#define ENABLE_LOG 1
+
+void ObjectTracking3D(string descriptorName, 
+                        string detectorType
+#if ENABLE_LOG
+                        ,ofstream &LogFile
+#endif
+                        )
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
 
@@ -75,9 +81,19 @@ int main(int argc, const char *argv[])
     bool bVis = false;            // visualize results
 
     /* MAIN LOOP OVER ALL IMAGES */
-
+#if ENABLE_LOG
+    LogFile << "/******************** DETECTOR TYPE: " << detectorType << "****************/" << endl;
+    LogFile << "/-------------------- DESCRIPTOR TYPE: " << descriptorName << "-----------------/" << endl;
+    LogFile << "Frame | Num Kp | match kp | ttc lidar | ttc camera | ttc diff |" << endl;
+#endif
+    
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
     {
+        int NumDetectedKeypoint = 0;
+        int NumMatchedKeypoints = 0;
+        int NumMatchedBboxes = 0;
+        double ttcLidar = 0;
+        double ttcCamera = 0;
         /* LOAD IMAGE INTO BUFFER */
 
         // assemble filenames for current index
@@ -150,9 +166,9 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "AKAZE";
-
+        
         detKeypointsModern(keypoints, imgGray, detectorType);
+        NumDetectedKeypoint = keypoints.size();
 
         // optional : limit number of keypoints (helpful for debugging and learning)
         bool bLimitKpts = false;
@@ -177,7 +193,7 @@ int main(int argc, const char *argv[])
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        string descriptorName = "AKAZE"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+        
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorName);
 
         // push descriptors for current frame to end of data buffer
@@ -199,6 +215,8 @@ int main(int argc, const char *argv[])
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
                              matches, descriptorType, matcherType, selectorType, descriptorName);
+            
+            NumMatchedKeypoints = matches.size();
 
             // store matches in current data frame
             (dataBuffer.end() - 1)->kptMatches = matches;
@@ -212,6 +230,7 @@ int main(int argc, const char *argv[])
             //// TASK FP.1 -> match list of 3D objects (vector<BoundingBox>) between current and previous frame (implement ->matchBoundingBoxes)
             map<int, int> bbBestMatches;
             matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end()-2), *(dataBuffer.end()-1)); // associate bounding boxes between current and previous frame using keypoint matches
+            NumMatchedBboxes = bbBestMatches.size();
             //// EOF STUDENT ASSIGNMENT
 
             // store matches in current data frame
@@ -248,29 +267,42 @@ int main(int argc, const char *argv[])
                 {
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
-                    double ttcLidar; 
+                    
                     computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
                     //// EOF STUDENT ASSIGNMENT
 
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.3 -> assign enclosed keypoint matches to bounding box (implement -> clusterKptMatchesWithROI)
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
-                    double ttcCamera;
+                    
                     clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     //// EOF STUDENT ASSIGNMENT
-
+#if ENABLE_LOG
+                    //"Frame | Num Kp | match kp | ttc lidar | ttc radar |"
+                    LogFile << std::setw(5) << imgIndex << "," 
+                            << std::setw(8) << NumDetectedKeypoint << ","
+                            << std::setw(10) << NumMatchedKeypoints << ","
+                            << std::setw(11) << ttcLidar << ","
+                            << std::setw(11) << ttcCamera << ","
+                            << std::setw(10) << ttcLidar - ttcCamera << "," 
+                            << endl;
+#endif
+#if ENABLE_LOG
+                    bVis = false;
+#else
                     bVis = true;
+#endif
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
+                        //showLidarTopview(currBB->lidarPoints, cv::Size(4.0, 20.0), cv::Size(2000, 2000), true);
                         showLidarImgOverlay(visImg, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
                         cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
                         
                         char str[200];
                         sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
                         putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
-
                         string windowName = "Final Results : TTC";
                         cv::namedWindow(windowName, 4);
                         cv::imshow(windowName, visImg);
@@ -280,11 +312,68 @@ int main(int argc, const char *argv[])
                     bVis = false;
 
                 } // eof TTC computation
-            } // eof loop over all BB matches            
+            } // eof loop over all BB matches     
 
         }
-
     } // eof loop over all images
+}
+
+/* MAIN PROGRAM */
+int main(int argc, const char *argv[])
+{
+    ofstream LogFile;
+    LogFile.open("InfoLog.csv");
+
+    vector<string> detectorTypes{"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
+    vector<string> descriptorTypes{"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
+    bool PerformanceEstimationEnable = true;
+
+#if !ENABLE_LOG
+        ObjectTracking3D(descriptorTypes[1]
+                        ,detectorTypes[2]
+#if ENABLE_LOG
+                        ,LogFile
+#endif
+                        );
+#else
+    for (std::string det : detectorTypes)
+    {
+            
+            for (std::string des : descriptorTypes)
+            {
+                if ((det.compare("AKAZE") == 0) && (des.compare("AKAZE") == 0))
+                {
+                    ObjectTracking3D(des, det
+#if ENABLE_LOG
+                    ,LogFile
+#endif
+                );
+            }
+            else if ((det.compare("SIFT") == 0))
+            {
+                if((des.compare("ORB") != 0) && (des.compare("AKAZE") != 0))
+                {
+                    ObjectTracking3D(des, det
+#if ENABLE_LOG
+                                    ,LogFile
+#endif
+                    );
+                }
+            }
+            else if (des.compare("AKAZE") != 0)
+            {
+                ObjectTracking3D(des, det
+#if ENABLE_LOG
+                                ,LogFile
+#endif
+                );
+            }
+
+        }
+    }
+#endif
+
+    LogFile.close();
 
     return 0;
 }
