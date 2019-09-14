@@ -42,3 +42,42 @@ where: dT is time difference between 2 frames
 No unreasonable lidar ttc was detected. All values are in range from 8.4 to 16.1. See measurement data [here](https://github.com/truongconghiep/SFND_3D_Object_Tracking/blob/master/build/InfoLog.csv)
 
 ### 6. Accuracy evaluation
+
+Measurement of different detector/descriptor combinations is given below:
+
+| Detector   | Descriptor | Frame | TTC lidar | TTC camera | TTC diff |
+|------------|------------|-------|-----------|------------|----------|
+| HARRIS     |    ORB     |   6   |  13.4805  |   13.6217  | -0.141213|
+|HARRIS|	BRISK|	11|	11.6056|	11.7414|	-0.135786|
+|HARRIS|	BRIEF|	11|	11.6056|	11.7414|	-0.135786|
+|HARRIS|	FREAK|	11|	11.6056|	11.7414|	-0.135786|
+|FAST|	SIFT|	1|	12.1403|	12.2747|	-0.134334|
+|SHITOMASI|	SIFT|	9|	11.8654|	11.9899|	-0.124507|
+|FAST|	BRIEF|	6|	13.4805|	13.5942|	-0.113665|
+|SIFT|	BRIEF|	12|	9.77463|	9.87061|	-0.0959779|
+|HARRIS|	FREAK|	7|	13.5199|	13.6036|	-0.0837262|
+|ORB|	FREAK|	1|	12.1403|	12.2074|	-0.0670974|
+|AKAZE|	ORB|	10|	11.7072|	11.7537|	-0.0465839|
+|**SHITOMASI**|	**FREAK**|	17|	10.9079|	10.9094|	-0.00146737|**
+|**AKAZE**|	**FREAK**|	1|	12.1403|	12.1239|	0.016497|
+|**AKAZE**|	**BRIEF**|	10|	11.7072|	11.6673|	0.0398412|
+|SIFT|	SIFT|	13|	9.31567|	9.24576|	0.0699048|
+|FAST|	FREAK|	1|	12.1403|	12.0538|	0.0865223|
+|SHITOMASI|	SIFT|	17|	10.9079|	10.7884|	0.119557|
+|HARRIS|	ORB|	11|	11.6056|	11.4377|	0.16796|
+|HARRIS|	SIFT|	11|	11.6056|	11.4377|	0.16796|
+|SHITOMASI|	BRIEF|	4|	13.7868|	13.6007|	0.186071|
+|SHITOMASI|	BRISK|	2|	13.1844|	12.9876|	0.196752|
+
+As seen above the best detector/descriptor combinations are SHITOMASI/FREAK, AKAZE/FREAK and AKAZE/BRIEF
+
+Some combination where camera-based TTC is way off:
+
+| Detector   | Descriptor | Frame | TTC lidar | TTC camera | TTC diff |
+|------------|------------|-------|-----------|------------|----------|
+|HARRIS|BRIEF|18|	158|	100|	8.43837|	       -inf|	       inf|
+|HARRIS|BRISK|18|	158|	73|	8.43837|	       -inf|	       inf|
+|HARRIS|BRISK|5|	241|	134|	12.4891|	       -inf|	       inf|
+
+
+
