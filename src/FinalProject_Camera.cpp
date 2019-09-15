@@ -321,8 +321,10 @@ void ObjectTracking3D(string descriptorName,
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {
+#if ENABLE_LOG
     ofstream LogFile;
     LogFile.open("InfoLog.csv");
+#endif
 
     vector<string> detectorTypes{"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
     vector<string> descriptorTypes{"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
@@ -372,8 +374,9 @@ int main(int argc, const char *argv[])
         }
     }
 #endif
-
+#if ENABLE_LOG
     LogFile.close();
+#endif
 
     return 0;
 }
